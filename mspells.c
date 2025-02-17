@@ -174,7 +174,7 @@ void Init_Spells ( struct Spell *Spells[MAX_SPELLS], char *szFileName )
     for (iTemp = 0; iTemp < MAX_SPELLS; iTemp++)
         Spells[iTemp] = NULL;
 
-	for (;;)
+    for (;;)
 	{
 		/* read in a line */
         if (fgets(szLine, 255, fpSpell) == NULL) break;
