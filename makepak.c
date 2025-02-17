@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #ifdef __MSDOS__
 # include <alloc.h>
 # include <malloc.h>
@@ -144,19 +145,30 @@ void AddToPak(char *pszFileName, char *pszFileAlias, FILE *fpPakFile)
 	{
 		if (NumBytes > 64000L)
 		{
-            fread (Chunk, 64000L, 1, fpInput);
-            fwrite(Chunk, 64000L, 1, fpPakFile);
+                  if (fread (Chunk, 64000L, 1, fpInput) != 1) {
+                      printf("Error reading file %s\n", pszFileName);
+                      fclose(fpInput);
+                      farfree(Chunk);
+                      return;
+                  }
+
+                fwrite(Chunk, 64000L, 1, fpPakFile);
 
 			NumBytes -= 64000L;
 			CurByte += 64000L;
 		}
 		else
 		{
-            fread (Chunk, NumBytes, 1, fpInput);
-            fwrite(Chunk, NumBytes, 1, fpPakFile);
+                  if (fread (Chunk, NumBytes, 1, fpInput) != 1) {
+                    printf("Error reading file %s\n", pszFileName);
+                    fclose(fpInput);
+                    farfree(Chunk);
+                    return;
+                  }
+                  fwrite(Chunk, NumBytes, 1, fpPakFile);
 
-			CurByte += NumBytes;
-			NumBytes -= NumBytes;
+		  CurByte += NumBytes;
+		  NumBytes -= NumBytes;
 		}
 	}
 
