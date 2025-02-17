@@ -51,7 +51,7 @@ int main (int argc, char **argv)
         exit(0);
     }
 
-    printf("NPC is %d bytes\n", sizeof(struct NPCInfo));
+    printf("NPC is %ld bytes\n", sizeof(struct NPCInfo));
 
     Init_NPCs( argv[1], argv[2] );
 	return(0);
