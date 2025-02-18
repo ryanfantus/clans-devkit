@@ -1253,7 +1253,6 @@ int GetGUM(FILE *fpGUM)
     char *pcFrom, *pcTo, szFileName[MAX_FILENAME_LEN], szString[128];
     FILE *fpToFile;
     long lFileSize, lCompressSize;
-    long ByteCount;
     unsigned short date, time;
 
     ClearAll();
@@ -1299,14 +1298,12 @@ int GetGUM(FILE *fpGUM)
     }
 
     /* get filesize from psi file */
-    fread(&lFileSize, sizeof(long), 1, fpGUM);
-    ByteCount = lFileSize;
-
-    fread(&lCompressSize, sizeof(long), 1, fpGUM);
+    if (!fread(&lFileSize, sizeof(long), 1, fpGUM)) return 0;
+    if (!fread(&lCompressSize, sizeof(long), 1, fpGUM)) return 0;
 
     // get datestamp
-    fread(&date, sizeof(unsigned short), 1, fpGUM);
-    fread(&time, sizeof(unsigned short), 1, fpGUM);
+    if (!fread(&date, sizeof(unsigned short), 1, fpGUM)) return 0;
+    if (!fread(&time, sizeof(unsigned short), 1, fpGUM)) return 0;
 
     // get type of input depending on WriteType
     if (FileExists(szFileName) && WriteType(szFileName) == OVERWRITE)
@@ -1619,7 +1616,6 @@ void Extract ( char *szExtractFile, char *szNewName )
     char *pcFrom, *pcTo, szFileName[MAX_FILENAME_LEN], szString[128];
     FILE *fpToFile, *fpGUM;
     long lFileSize, lCompressSize;
-    long ByteCount;
     unsigned short date, time;
 
     ClearAll();
@@ -1667,14 +1663,13 @@ void Extract ( char *szExtractFile, char *szNewName )
         if (szFileName[0] != '/')
         {
             /* get filesize from psi file */
-            fread(&lFileSize, sizeof(long), 1, fpGUM);
-            ByteCount = lFileSize;
+            if (!fread(&lFileSize, sizeof(long), 1, fpGUM)) return;
 
-            fread(&lCompressSize, sizeof(long), 1, fpGUM);
+            if (!fread(&lCompressSize, sizeof(long), 1, fpGUM)) return;
 
             // get datestamp
-            fread(&date, sizeof(unsigned), 1, fpGUM);
-            fread(&time, sizeof(unsigned), 1, fpGUM);
+            if (!fread(&date, sizeof(unsigned short), 1, fpGUM)) return;
+            if (!fread(&time, sizeof(unsigned short), 1, fpGUM)) return;
         }
         else
         {
@@ -1825,12 +1820,12 @@ void ListFiles ( void )
         {
 
             /* get filesize from psi file */
-            fread(&lFileSize, sizeof(long), 1, fpGUM);
-            fread(&lCompressSize, sizeof(long), 1, fpGUM);
+            if (!fread(&lFileSize, sizeof(long), 1, fpGUM)) return;
+            if (!fread(&lCompressSize, sizeof(long), 1, fpGUM)) return;
 
             // get datestamp
-            fread(&date, sizeof(unsigned short), 1, fpGUM);
-            fread(&time, sizeof(unsigned short), 1, fpGUM);
+            if (!fread(&date, sizeof(unsigned short), 1, fpGUM)) return;
+            if (!fread(&time, sizeof(unsigned short), 1, fpGUM)) return;
 
             // show dir like DOS :)
             sprintf(szString, "|15%14s  |06-- |07%9ld bytes  ",
@@ -1938,7 +1933,7 @@ unsigned short _dos_setftime (int handle, unsigned short date, unsigned short ti
 #ifdef _WIN32
 	struct _utimbuf tm_buf;
 #elif defined(__unix__)
-	struct timeval tmv_buf;
+	struct timeval tmv_buf[2];
 #endif
 
 	memset (&dos_dt, 0, sizeof(struct tm));
@@ -1955,9 +1950,10 @@ unsigned short _dos_setftime (int handle, unsigned short date, unsigned short ti
 	tm_buf.actime = tm_buf.modtime = file_dt;
 	return (_futime (handle, &tm_buf));
 #elif defined(__unix__)
-	tmv_buf.tv_sec = file_dt;
-	tmv_buf.tv_usec = file_dt * 1000;
-	return (futimes (handle, &tmv_buf));
+	tmv_buf[0].tv_sec = file_dt;
+	tmv_buf[0].tv_usec = file_dt * 1000;
+        tmv_buf[1] = tmv_buf[0];
+	return futimes (handle, tmv_buf);
 #else
 #error "_dos_setftime needs a setting function, compilation aborted"
 #endif
